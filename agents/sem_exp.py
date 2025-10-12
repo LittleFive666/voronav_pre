@@ -19,15 +19,12 @@ import heapq
 import networkx as nx
 from skimage import measure
 from skimage.graph import route_through_array
-# import google.generativeai as palm
-import  openai
+import openai
 from openai import OpenAI
 
 API_SECRET_KEY = "814af94051162c79e69d5dec40bc1736";
 BASE_URL = "https://flag.smarttrot.com/v1/"
 client = OpenAI(api_key=API_SECRET_KEY, base_url=BASE_URL)
-
-
 
 class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
     """The Sem_Exp environment agent class. A seperate Sem_Exp_Env_Agent class
@@ -135,6 +132,7 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
         if args.visualize or args.print_images:
             self.vis_image = vu.init_vis_image(self.goal_name, self.legend)
         return obs, info
+
     def new_episodes(self):
         args = self.args
         map_shape = (args.map_size_cm // args.map_resolution,
@@ -179,7 +177,6 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
         self.explored_area=0
         self.path_legnth=1
 
-
     def plan_act_and_preprocess(self, planner_inputs):
         """Function responsible for planning, taking the action and
         preprocessing observations
@@ -203,11 +200,7 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
 
         if planner_inputs["clr"]==1:
             self.new_episodes()
-        # print("垂直方向为："+str(self._env.sim.get_agent_state(0).position[1]))
-        # not_in_floor=1
-        # for i in range(len(self._env.current_episode.goals)):
-        #     if (self._env.current_episode.goals[i].position[1]<=self._env.current_episode.start_position[1]+1) and self._env.current_episode.goals[i].position[1]>=self._env.current_episode.start_position[1]-1:
-        #         not_in_floor=0
+
         if planner_inputs["new_goal"]:
             self.info['clear_flag'] = 0
 
@@ -215,17 +208,11 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
         if planner_inputs["wait"]:
             self.last_action = None
             self.info["sensor_pose"] = [0., 0., 0.]
-            # action={'action':3}
-            # obs, rew, done, info = super().step(action)
             return np.zeros(self.obs.shape), 0., False, self.info
-
-        # Reset reward if new long-term goal
-
 
         action = self._plan(planner_inputs)
         print("stuck_count:"+str(self.stuck_count)+"replan_count:"+str(self.replan_count))
-        # if not_in_floor==1:
-        #     action=0
+
         if self.stuck_count > 20 or self.replan_count > 35:
             self.info['clear_flag'] = 1
             self.stuck_count = 0
@@ -234,7 +221,6 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
             self.joint_visited=np.zeros_like(self.joint_visited)
             self.orientation_caption={}
             self.caption_locations=[]
-
 
         if action >= 0:
 
@@ -307,22 +293,6 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
         angle_agent = (start_o) % 360.0
         if angle_agent > 180:
             angle_agent -= 360
-        #print("垂直方向为："+str(self._env.sim.get_agent_state(0).position[1]))
-        # if self._env.sim.get_agent_state(0).position[1] < self._env.current_episode.start_position[1]-0.2 and self.down_flag==0: 
-        #     # self.collision_map[gx1:gx2, gy1:gy2]= np.logical_or(self.collision_map[gx1:gx2, gy1:gy2],area_mask(map_pred,self.next_node[0],self.next_node[1],15))
-        #     # for i in range(6):
-        #     #     action = {'action': 3}
-        #     #     super().step(action)
-        #     # for i in range(10):
-        #     #     action = {'action': 1}
-        #     #     super().step(action)
-        #     self.joint_visited[gx1:gx2, gy1:gy2]=vu.draw_line(self.next_node, self.next_node,
-        #                                     self.joint_visited[gx1:gx2, gy1:gy2],25,8)
-        #     # action=1
-        #     # return action
-        #     self.cflag = 0
-        #     self.down_flag=1
-
 
         if self.last_window is None:
             self.last_window = planning_window
@@ -353,12 +323,8 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
                     max_num=i+1
             goal=img_label==max_num
             map_pred = np.rint(planner_inputs['map_pred'])
-            # points_unexplore_area,adjacent_node,far_node=self._visualize(planner_inputs,2)
             _,_,_,_,_,_=self._visualize(planner_inputs.copy(),2)
-
-
         else:
-
             #找到未知最大的voronoi结点
             ## add the evelution angle
             eve_start_x = int(5 * math.sin(angle_agent/180*np.pi) + start[0])
@@ -379,19 +345,12 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
                 self._visualize(planner_inputs.copy(),self.cflag)
                 return action
 
-
-
-
-
-
             exploratory_node,adjacent_node,far_node,skeleton_mask,joint_node,voronoi_graph=self._visualize(planner_inputs.copy(),self.cflag)
-            
+
             if self.cflag == 0:
 
                 joint_mask= np.zeros_like(self.last_goal)
 
-                # if self.rotate_count == 0 and list(adjacent_node.keys())!=[()] and (self.joint_visited[gx1:gx2, gy1:gy2][list(adjacent_node.keys())[0][0],list(adjacent_node.keys())[0][1]]==1) and np.sum(self.joint_visited[gx1:gx2, gy1:gy2])>0:
-                #     self.rotate_count =12
                 if self.rotate_count == 0 and (self.joint_visited[gx1:gx2, gy1:gy2][start[0],start[1]]==1) :
                     self.rotate_count =12                
                 else:
@@ -415,25 +374,18 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
                                     near_value=(self.caption_locations[i][0]-start[0]-gx1)**2+(self.caption_locations[i][1]-start[1]-gy1)**2
                             self.orientation_caption[self.caption_locations[near_idx][0],self.caption_locations[near_idx][1]][tmp_start_o]=self.caption
 
-
-
                 self.rotate_count += 1
                 action = 3
                 goal = np.zeros((map_pred.shape[0],map_pred.shape[1]))
                 if self.rotate_count == 13:
                     self.cflag = 2 #需要需要选点
                     self.rotate_count = 0
-                    # if list(adjacent_node.keys())!=[()]:
-                    #     self.joint_visited[gx1:gx2, gy1:gy2] = \
-                    #                         vu.draw_line(list(adjacent_node.keys())[0], list(adjacent_node.keys())[0],
-                    #                         self.joint_visited[gx1:gx2, gy1:gy2],25,15)
                     self.joint_visited[gx1:gx2, gy1:gy2] = \
-                                        vu.draw_line(start, start,
-                                        self.joint_visited[gx1:gx2, gy1:gy2],25,8)
+                        vu.draw_line(start, start, self.joint_visited[gx1:gx2, gy1:gy2],25,8)
                 else:
                     self.last_goal=goal
                     return action
-            # print(list(adjacent_node.values())[0])
+
             if list(adjacent_node.values())[0]<8**2:
                 if self.cflag == 3:
                     self.cflag=0
@@ -447,11 +399,6 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
                 self.cflag =3
 
             if self.cflag == 2: ##选点
-
-                # print(len(largest_keys))
-                
-
-
                 if len(exploratory_node)==0:
                     actions = torch.randn(1, 2)*6
                     cpu_actions = nn.Sigmoid()(actions).numpy()
@@ -468,34 +415,13 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
                 else:
                     my_node = list(adjacent_node.keys())[0]
                     self.next_node = self.best_node(my_node, exploratory_node, skeleton_mask.copy(), joint_node[:], planner_inputs.copy(),self.info['goal_cat_id'],voronoi_graph)
-
-
-
                     self.cflag = 4
-
-        
-
 
             # Get Map prediction
             map_pred = np.rint(planner_inputs['map_pred'])
-            # goal = planner_inputs['goal']
-            # max_key = max(points_unexplore_area.items(), key=lambda x: x[1])[0]
-            # if points_unexplore_area[max_key]<10:
-            #     action = 3
-            #     return action
             goal = area_mask(map_pred,self.next_node[0],self.next_node[1],1)
 
-
-
-
-
-
-
-
-        self.last_goal=goal##为了显示在地图上
-        # Get pose prediction and global policy planning window
-
-
+        self.last_goal=goal
 
         # Get curr loc
         self.curr_loc = [start_x, start_y, start_o]
@@ -515,10 +441,7 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
                           int(c * 100.0 / args.map_resolution - gy1)]
             last_start = pu.threshold_poses(last_start, map_pred.shape)
             self.visited_vis[gx1:gx2, gy1:gy2] = \
-                vu.draw_line(last_start, start,
-                             self.visited_vis[gx1:gx2, gy1:gy2])
-            
-
+                vu.draw_line(last_start, start, self.visited_vis[gx1:gx2, gy1:gy2])
 
         # Collision check
         if self.last_action == 1:
@@ -583,12 +506,6 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
                                                     self.collision_map.shape)
                         self.collision_map[r, c] = 0
 
-                
-        # if planner_inputs['found_goal'] != 1:
-        #     kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3, 3))
-        #     plan_map = cv2.dilate(map_pred, kernel)
-        # else:
-            
         if np.sum(goal)>0:
             stg, replan,stop = self._get_stg(map_pred, start, np.copy(goal),
                                   planning_window,planner_inputs['found_goal'])
@@ -605,15 +522,13 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
         time2=time.perf_counter()
 
         # Deterministic Local Policy
-        if (stop and planner_inputs['found_goal'] == 1) or self.replan_count > 35:# or ((planner_inputs['found_goal'] != 1)):# and self.stuck_count > 80):
+        if (stop and planner_inputs['found_goal'] == 1) or self.replan_count > 35:
             action = 0  # Stop
-        elif stop:##目的是为了到达中间节点停止了，让他开始转圈再选点
+        elif stop:
             action=3
             self.cflag=0
         else:
             (stg_x, stg_y) = stg
-
-
             self.fmm_goal=area_mask(map_pred,stg[0],stg[1],2)
             angle_st_goal = math.degrees(math.atan2(stg_x - start[0],
                                                     stg_y - start[1]))
@@ -638,7 +553,6 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
         """Get short-term goal"""
 
         [gx1, gx2, gy1, gy2] = planning_window
-        
         x1, y1, = 0, 0
         x2, y2 = grid.shape
 
@@ -648,15 +562,8 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
             new_mat[1:h + 1, 1:w + 1] = mat
             return new_mat
 
-        # else:
         traversible = skimage.morphology.binary_dilation(
-            grid[x1:x2, y1:y2],
-            self.selem) != True
-        # if f_flag!=1:
-        #     t_kernel= cv2.getStructuringElement(cv2.MORPH_RECT,(5, 5))
-        # else:
-        #     t_kernel= cv2.getStructuringElement(cv2.MORPH_RECT,(3, 3))
-        # traversible = np.rint(cv2.dilate(grid[x1:x2, y1:y2].astype(np.uint8), t_kernel))!=1
+            grid[x1:x2, y1:y2], self.selem) != True
         traversible[self.collision_map[gx1:gx2, gy1:gy2]
                     [x1:x2, y1:y2] == 1] = 0
         traversible[self.visited[gx1:gx2, gy1:gy2][x1:x2, y1:y2] == 1] = 1
@@ -666,15 +573,10 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
 
         traversible = add_boundary(traversible)
         goal = add_boundary(goal, value=0)
-        
+
         planner = FMMPlanner(traversible)
-        if f_flag==1:
-            selem = skimage.morphology.disk(1)
-        else:
-            selem = skimage.morphology.disk(1)
-        
-        goal = skimage.morphology.binary_dilation(
-            goal, selem) != True
+        selem = skimage.morphology.disk(1)
+        goal = skimage.morphology.binary_dilation(goal, selem) != True
         goal = 1 - goal * 1.
         planner.set_multi_goal(goal)
 
@@ -691,13 +593,11 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
         rgb = obs[:, :, :3]
         depth = obs[:, :, 3:4]
         semantic = obs[:,:,4:5].squeeze()
-        # print("obs: ", semantic.shape)
 
         self.rgb_vis = rgb[:, :, ::-1]
         sem_seg_pred = np.zeros((rgb.shape[0], rgb.shape[1], 15 + 1))
         for i in range(16):
             sem_seg_pred[:,:,i][semantic == i+1] = 1
-        # sem_seg_pred = np.zeros((rgb.shape[0], rgb.shape[1], 15 + 1))
         self.caption = self.sem_pred.get_prediction(rgb)
         depth = self._preprocess_depth(depth, args.min_depth, args.max_depth)
 
@@ -731,7 +631,6 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
         if use_seg:
             semantic_pred, self.rgb_vis, self.caption = self.sem_pred.get_prediction(rgb)
             semantic_pred = semantic_pred.astype(np.float32)
-            # semantic_pred = np.zeros((rgb.shape[0], rgb.shape[1], 16))
             self.rgb_vis = rgb[:, :, ::-1]
         else:
             semantic_pred = np.zeros((rgb.shape[0], rgb.shape[1], 16))
@@ -740,34 +639,22 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
 
     def _visualize(self, inputs,search_mode):
         args = self.args
-        # time.sleep(0.5)
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(3, 3))
         kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT,(5, 5))
         kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT,(16,16))
-        # v_kernel= cv2.getStructuringElement(cv2.MORPH_RECT,(4,4))
 
         start_x, start_y, start_o, gx1, gx2, gy1, gy2 = inputs['pose_pred']
         gx1, gx2, gy1, gy2 = int(gx1), int(gx2), int(gy1), int(gy2)
-        #print(gx1,gx2, gy1, gy2)
         map_pred = np.rint(inputs['map_pred'].copy())
         frontier = inputs['map_edge'].copy()
         back_map_pred = cv2.dilate(map_pred, kernel)
-        # back_map_pred = np.logical_or(back_map_pred, self.collision_map[gx1:gx2, gy1:gy2] == 1).astype(np.float32)
-        # back_map_pred = cv2.medianBlur(back_map_pred.astype(np.uint8), 5)
 
-        # 对障碍物反的膨胀进行骨架提取
-        
         edge_mask = frontier == 1
-        #对探索区域进行膨胀
         exp_pred = inputs['exp_pred'].copy()
-        #得到机器人位置
-
-
         goal = inputs['goal'] if inputs['found_goal'] else self.last_goal
 
         sem_map = inputs['sem_map_pred'].copy()
         sem_map += 5
-        # sem_map= np.zeros_like(sem_map)
 
         last_start_x, last_start_y = self.last_loc[0], self.last_loc[1]
         r, c = last_start_y, last_start_x
@@ -775,67 +662,45 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
                         int(c * 100.0 / args.map_resolution - gy1)]
         last_start = pu.threshold_poses(last_start, map_pred.shape)
         true_exp_pred= exp_pred.copy()
-    
-        # exp_pred=cv2.dilate(exp_pred.astype(np.float32),kernel)
+
         kernel = np.ones((10, 10), dtype=np.uint8)
-        exp_pred = cv2.morphologyEx(exp_pred, cv2.MORPH_CLOSE, kernel)   
+        exp_pred = cv2.morphologyEx(exp_pred, cv2.MORPH_CLOSE, kernel)
         exp_pred=np.rint(exp_pred)==1
-        # u_kernel= cv2.getStructuringElement(cv2.MORPH_RECT,(2,2))
-        # back_map_pred=cv2.dilate(back_map_pred.astype(np.float32),u_kernel)
         voronoi = np.where(np.subtract(exp_pred,back_map_pred)==-1,0,np.subtract(exp_pred,back_map_pred))
-        # voronoi = cv2.morphologyEx(voronoi, cv2.MORPH_CLOSE, v_kernel)
         skeleton = skimage.morphology.skeletonize(voronoi)
 
         skeleton_pred = skeleton.astype(np.int)
-        # mask2 = preprocess_exp_map(exp_pred.copy(),map_pred.copy(),inputs['pose_pred'])
-
-        #历史区域
         vis_mask = self.visited_vis[gx1:gx2, gy1:gy2] == 1
-
-        # sem_map += 5
-
         no_cat_mask = sem_map == 20
         #得到探索和障碍物区域的mask
         map_mask = np.rint(map_pred) == 1
         exp_mask = np.rint(exp_pred) == 1
         true_exp_mask = np.rint(true_exp_pred) == 1
         skeleton_mask = np.rint(skeleton_pred) == 1
-        # skeleton_mask = np.logical_and(skeleton_mask,np.rint(cv2.dilate(true_exp_mask.astype(np.float32),kernel)))
-        ##找到最大的骨架
+        
+        # 找到最大的骨架
         img_label,num=measure.label(skeleton_mask,connectivity=2,return_num=True)
         max_num=1
         for i in range(num):
             if np.sum(img_label==i+1)>np.sum(img_label==max_num):
                 max_num=i+1
         skeleton_mask=img_label==max_num
-        ##生成交叉点
+        
+        # 生成交叉点
         old_joint_mask= np.zeros_like(sem_map)
-        
-        
         sem_map[no_cat_mask] = 0
         joint_mask= np.zeros_like(sem_map)
         for i in  np.argwhere(skeleton_mask):
-            if np.sum(skeleton_mask[i[0]-1:i[0]+2, i[1]-1:i[1]+2]) >= 4 :#or np.sum(skeleton_mask[i[0]-1:i[0]+2, i[1]-1:i[1]+2]) == 2:
+            if np.sum(skeleton_mask[i[0]-1:i[0]+2, i[1]-1:i[1]+2]) >= 4:
                 old_joint_mask[i[0]][i[1]]=1
 
-
-        ##我加了一点，消除很短的枝岔
+        # 消除很短的枝岔
         for i in np.argwhere(skeleton_mask):
             if (np.sum(skeleton_mask[i[0]-1:i[0]+2, i[1]-1:i[1]+2]) == 2):
                 tmp_exp_node_mask=np.zeros_like(sem_map)
                 tmp_exp_node_mask[i[0]-4:i[0]+5,i[1]-4:i[1]+5]=1
                 if np.sum(np.logical_and(tmp_exp_node_mask,old_joint_mask))==0:
                     old_joint_mask[i[0]][i[1]]=1
-
-
-
-
-
-
-
-
-
-
 
         for i in  np.argwhere(old_joint_mask):
             if i[0]<args.map_size_cm // args.map_resolution//args.global_downscaling-1 and i[0]>0 and i[1]<args.map_size_cm // args.map_resolution//args.global_downscaling-1 and i[1]>0:
@@ -852,34 +717,17 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
                 joint_node.append(i)
                 joint_mask[i[0]-1:i[0]+2, i[1]-1:i[1]+2]=0
 
-
-        #####开始建graph
-        # print(joint_node)
+        # 开始建graph
         voronoi_graph=build_graph(skeleton_mask.copy(), joint_node.copy(),vis_mask.copy(),true_exp_mask.copy(),map_mask.copy())
-        
         adjacent_node,_ = search_adjacent(last_start,joint_node,map_pred)
         far_node,_ = search_far(last_start,joint_node)
 
-
-
-
-
-
-        
         m1=np.logical_and(no_cat_mask,true_exp_mask)
         sem_map[m1] = 2
-        ####我新加的
-        # map_mask=cv2.dilate(map_mask.astype(np.float32),kernel3)
-        # map_mask=cv2.erode(map_mask.astype(np.float32),kernel3)
         map_mask = np.rint(map_mask) == 1
         m2=np.logical_and(map_mask,no_cat_mask)
         sem_map[m2] = 1
         sem_map[skeleton_mask] = 4
-        # sem_map[vis_mask] = 4
-        # sem_map[mask2]=7
-        # for i in range(len(joint_node)):
-        #     x,y=joint_node[i]
-        #     sem_map[x][y]=4
 
         selem = skimage.morphology.disk(3)
         goal_mat = 1 - skimage.morphology.binary_dilation(
@@ -887,7 +735,6 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
         
         goal_mask = goal_mat == 1
         sem_map[goal_mask] = 3
-        # sem_map[edge_mask] = 7
         sem_map[self.collision_map[gx1:gx2, gy1:gy2] == 1]= 3
         tmp_kernel = cv2.getStructuringElement(cv2.MORPH_RECT,(13,13))
         dilated_frontier = cv2.dilate(frontier.astype(np.float32), tmp_kernel)
@@ -895,19 +742,6 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
         for i in range(len(joint_node)):
             if dilated_frontier[joint_node[i][0],joint_node[i][1]]==1:
                 exploratory_node[tuple(joint_node[i])]=1
-
-        # for i in range(len(exploratory_node)):
-        #     x,y=list(exploratory_node.keys())[i]
-        #     sem_map[x][y]=11
-
-
-
-
-        # for i in range(len(self.path_mask)):
-        #     sem_map[np.rint(self.path_mask[i])==1]=5
-        # sem_map[np.rint(self.visited_vis[gx1:gx2, gy1:gy2])==1]=3
-        # if self.fmm_goal is not None:
-        #     sem_map[self.fmm_goal.astype(np.bool)]=5
 
         color_pal = [int(x * 255.) for x in color_palette]
         sem_map_vis = Image.new("P", (sem_map.shape[1],
@@ -918,9 +752,8 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
         sem_map_vis = np.flipud(sem_map_vis)
 
         sem_map_vis = sem_map_vis[:, :, [2, 1, 0]]
-        sem_map_vis = cv2.resize(sem_map_vis, (480, 480),
-                                    interpolation=cv2.INTER_NEAREST)
-        ###从这里开始我注释了
+        sem_map_vis = cv2.resize(sem_map_vis, (480, 480), interpolation=cv2.INTER_NEAREST)
+        
         self.vis_image[50:530, 670:1150] = sem_map_vis
         self.vis_image[50:530, 15:655] = self.rgb_vis
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -964,15 +797,7 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
                 int(color_palette[9] * 255))
         cv2.drawContours(self.vis_image, [agent_arrow], 0, color, -1)
 
-
-        #cv2.imshow("Thread {}".format(1), self.vis_image)
-
-        #cv2.waitKey(1)
         return exploratory_node,adjacent_node,far_node,skeleton_mask,joint_node,voronoi_graph
-
-##如果没有节点，就action往左转
-##如果有节点，没有边，就选择最近的节点
-##如果有节点，有边，就选择goal
 
     def best_node(self,my_node, exploratory_node, skeleton_mask, joint_node,planner_inputs,goal_id,voronoi_graph):
         ##对每个joint_node，求出my_node到joint_node的最短路径mask
@@ -991,18 +816,8 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
         rev_skeleton=skeleton_mask.copy()
         rev_skeleton=np.where(rev_skeleton==1,0,1)
 
-        ##求出本地节点的相邻节点
+        # 求出本地节点的相邻节点
         raw_my_node_neighbors=voronoi_graph[tuple(my_node)]
-
-        # my_node_neighbors=[]
-        # for i in range(len(raw_my_node_neighbors)):
-        #     if (raw_my_node_neighbors[i][0]-my_node[0])**2+(raw_my_node_neighbors[i][1]-my_node[1])**2>15**2:
-        #         my_node_neighbors.append(raw_my_node_neighbors[i])
-        #     else:
-        #         new_my_node_neighbors=voronoi_graph[tuple(raw_my_node_neighbors[i])]
-        #         for j in range(len(new_my_node_neighbors)):
-        #             if new_my_node_neighbors[j]!=my_node:
-        #                 my_node_neighbors.append(new_my_node_neighbors[j])
         iteration_node=voronoi_graph.copy()
         for i in range(len(iteration_node.keys())):
             iteration_node[list(iteration_node.keys())[i]]=0
@@ -1026,11 +841,7 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
             tmp_path_mask[indices[0],indices[1]]=1
             path_mask.append(tmp_path_mask)
 
-
-
-
-
-        ##把他们两两求并，抹除掉被包含的路径,
+        # 把他们两两求并，抹除掉被包含的路径
         i=0
         kernel=np.ones((3,3),np.uint8)
         while i !=len(path_mask):
@@ -1049,23 +860,16 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
                     j+=1
             i+=1
 
-        ##去除掉距离比较相近的路径对
-        ######先不写，这个可以之后写
-
-
-
-        ## 求出这些路径的下一个节点
-
-
+        # 求出这些路径的下一个节点
         path_next_node = [[] for i in range(len(path))]
         for i in range(len(path)):
             for j in range(len(my_node_neighbors)):
                 if cv2.dilate(path_mask[i].astype(np.uint8),kernel)[my_node_neighbors[j][0],my_node_neighbors[j][1]]:
                     path_next_node[i]=my_node_neighbors[j]
                     break
-        
+
         self.path_mask=path_mask
-        ##对这些路径进行语义描述
+        # 对这些路径进行语义描述
         path_semantic=[[] for i in range(len(path))]
         kernel_semantic = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(30, 30))
 
@@ -1131,106 +935,9 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
                     print("Failed 12 times(path), stopping")
                     break
 
-
-
-
-
-
-
-
-#————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
-
-    #     path_semantic_set=[]
-    #     for i in range(len(path_semantic)):
-    #         if path_semantic[i] not in path_semantic_set:
-    #             path_semantic_set.append(path_semantic[i])
-    #     while [] in path_semantic_set:
-    #         del path_semantic_set[path_semantic_set.index([])]
-    #     ##接入palm，求出最优路径
-    #     my_prompt="you have paths to go,"
-    #     for i in range(len(path_semantic_set)):
-    #         my_prompt+="Path "+str(i+1)+" : you will go to"
-    #         for j in range(len(path_semantic_set[i])):
-    #             my_prompt+=" "+path_semantic_set[i][j]+","
-    #         my_prompt+="; "
-    #     my_prompt+="Path "+str(len(path_semantic_set)+1)+" : you will continue to explore other rooms. "
-    #     my_prompt+=" Please estimate the probability of "+coco_categories_inv[goal_id]+" appearing at the endpoint of these paths for me in [0,1]. reply with JSON form :"+\
-    # "{\{\"Path_number\": $path_number,\"probability\": $probability}}"
-    #     print(my_prompt)
-    #     same_prompt_flag=1
-    #     if path_semantic_set==[]:
-    #         same_prompt_flag=0
-    #     for i in range(len(path_semantic_set)):
-    #         if self.last_path_semantic==[]:
-    #             same_prompt_flag=0
-    #             break
-    #         if  path_semantic_set[i] not in self.last_path_semantic:
-    #             same_prompt_flag=0
-    #             break
-    #     for i in range(len(self.last_path_semantic)):
-    #         if path_semantic_set==[]:
-    #             same_prompt_flag=0
-    #             break
-    #         if  self.last_path_semantic[i] not in path_semantic_set:
-    #             same_prompt_flag=0
-    #             break
-    #     if same_prompt_flag==1:
-    #         answer=self.last_answer
-    #     elif path_semantic_set!=[]:
-    #         response = openai.ChatCompletion.create(
-    #             engine="voronoi", # engine = "deployment_name".
-    #             messages=[
-
-    #                 {"role": "user", "content":my_prompt},
-    #             ],
-    #             temperature=0.5,
-    #         )
-    #         answer=response["choices"][0]["message"]["content"]
-    #         print(answer)
-    #         self.last_path_semantic=path_semantic_set.copy()
-    #         self.last_prompt=my_prompt
-    #         self.last_answer=response["choices"][0]["message"]["content"]
-    #     else:
-    #         answer="{probability\":1.0}"
-    #     answer=answer.replace(" ","")
-    #     answer=answer.replace("\n","")
-    #     path_probability=[]
-    #     for i in range(len(path_semantic_set)+1):
-    #         left_bracket = answer.find('{')
-    #         index1=answer.find("probability\":",left_bracket)
-    #         index2=answer.find("}",left_bracket)
-    #         probability=float(answer[index1+13:index2])
-    #         path_probability.append(probability)
-    #         answer=answer[index2+1:]
-    #     path_semantic_probability=[0 for i in range(len(path_semantic))]
-    #     for i in range(len(path_semantic)):
-    #         for j in range(len(path_semantic_set)):
-    #             if path_semantic[i]==path_semantic_set[j]:
-    #                 path_semantic_probability[i]=path_probability[j]
-    #             elif path_semantic[i]==[]:
-    #                 path_semantic_probability[i]=path_probability[-1]
-        # my_node_neighbors_scores=[0 for i in range(len(my_node_neighbors))]
-        # for i in range(len(my_node_neighbors)):
-        #     tmp_sum=0
-        #     node_path_sum=0
-        #     for j in range(len(path_semantic_probability)):
-        #         if path_next_node[j]==my_node_neighbors[i]:
-        #             if path_semantic_probability[j]+1>tmp_sum:
-        #                 tmp_sum=path_semantic_probability[j]+1
-        #             # node_path_sum+=1
-        #     if tmp_sum>0 and self.joint_visited[gx1:gx2, gy1:gy2][my_node_neighbors[i][0],my_node_neighbors[i][1]]==0:
-        #         tmp_sum+=1
-        #     my_node_neighbors_scores[i]=tmp_sum#/max(node_path_sum,1)
-
-
-#————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
         my_node_neighbors_scores=[0 for i in range(len(my_node_neighbors))]
-        ##预处理 caption 和 node
+        # 预处理 caption 和 node
         my_node_neighbors_caption=[[] for i in range(len(my_node_neighbors))]
-
-
-
-
 
         nearest_idx=0
         nearest_dis=100000000
@@ -1288,14 +995,7 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
                     print("Failed 12 times, stopping")
                     break
 
-                
-                
-                
-                
-                
-                
-                
-        #####！！！！！开始收集数据
+        # 开始收集数据
         os.makedirs("collected_data/file"+str(self.filename), exist_ok=True)
         my_prompt_1="you have areas to go:"
         for i in range(len(my_node_neighbors_caption)):
@@ -1333,8 +1033,7 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
         with open(file_path, "w") as file:
             file.write(answer_1)
 
-            
-        #####！！！！！开始收集数据 2
+        # 开始收集数据 2
         my_prompt_1="you have areas to go:"
         for i in range(len(my_node_neighbors_caption)):
             if "empty" in new_node_description[i]:
@@ -1369,9 +1068,9 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
             file.write(my_prompt_1)
         file_path = os.path.join("collected_data/file"+str(self.filename), "4.txt")
         with open(file_path, "w") as file:
-            file.write(answer_1)          
+            file.write(answer_1)
 
-        #####！！！！！开始收集数据 3
+        # 开始收集数据 3
         my_prompt_1="you have areas to go:"
         for i in range(len(my_node_neighbors_caption)):
             if "empty" in new_node_description[i]:
@@ -1407,9 +1106,8 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
         with open(file_path, "w") as file:
             file.write(answer_1)    
             
-        cv2.imwrite("collected_data/file"+str(self.filename)+"/image.png", self.vis_image) 
+        cv2.imwrite("collected_data/file"+str(self.filename)+"/image.png", self.vis_image)
         self.filename=self.filename+1
-
 
         for i in range(len(my_node_neighbors)):
             for j in range(len(path_semantic)):
@@ -1421,73 +1119,25 @@ class Sem_Exp_Env_Agent(ObjectGoal_Env_HM3D):
 
         return my_node_neighbors[np.argmax(my_node_neighbors_scores)]
 
-
-
-
-
-
-    ##求出最优路径的下一个路径点，返回
-
-
-    
-
-
-
-    
-
-
-# def area_mask(arr,x,y,r):
-#     """
-#     生成一个圆形的mask
-#     """
-#     h,w=arr.shape
-#     mask=np.zeros_like(arr)
-#     for i in range(h):
-#         for j in range(w):
-#             if (i-x)**2+(j-y)**2<=r**2:
-#                 mask[i][j]=1
-
-#     return mask
-
 def area_mask(arr, x, y, r):
-    """
-    生成一个圆形的mask
-    """
-    # 获取数组的高度和宽度
+    """生成一个圆形的mask"""
     h, w = arr.shape
-
-    # 生成网格矩阵
     yy, xx = np.meshgrid(np.arange(h), np.arange(w))
-
-    # 计算每个像素到圆心的距离
     dist = (xx - x) ** 2 + (yy - y) ** 2
-
-    # 根据距离和半径生成掩码数组
     mask = dist <= r**2
-
     return mask.astype(np.int)
 
-
-
 def search_adjacent(start,points,local_ob_map):
-    """
-    寻找最近的节点
-    """
+    """寻找最近的节点"""
     selem = skimage.morphology.disk(1)
-    traversible = skimage.morphology.binary_dilation(
-        local_ob_map, selem) != True
+    traversible = skimage.morphology.binary_dilation(local_ob_map, selem) != True
     planner = FMMPlanner(traversible)
     goal_pose_map = np.zeros((local_ob_map.shape))
     goal_pose_map[int(start[0]), int(start[1])] = 1
-    # goal_map = skimage.morphology.binary_dilation(
-    #     goal_pose_map, selem) != True
-    # goal_map = 1 - goal_map
     planner.set_multi_goal(goal_pose_map)
     min_dis=10000000
     min_point=[]
     my_dict={}
-
-
 
     for point in points:
         dist = planner.fmm_dist[int(point[0]), int(point[1])]
@@ -1499,9 +1149,7 @@ def search_adjacent(start,points,local_ob_map):
     return {tuple(min_point):min_dis},my_dict
 
 def search_far(start,points):
-    """
-    寻找最远的节点
-    """
+    """寻找最远的节点"""
     max_dis=0
     max_point=[]
     my_dict={}
@@ -1513,17 +1161,8 @@ def search_far(start,points):
         my_dict[tuple(point)]=dis
     return {tuple(max_point):max_dis},my_dict
 
-
-
-
-
-
-
-
 def build_graph(matrix, points,vis_mask,true_exp_mask,map_mask):
-    """
-    构建点之间的连通性
-    """
+    """构建点之间的连通性"""
     m, n = matrix.shape
     graph = {tuple(point): [] for point in points}
     edges = {tuple(point): [] for point in points}#节点之间的路径长度
@@ -1534,12 +1173,9 @@ def build_graph(matrix, points,vis_mask,true_exp_mask,map_mask):
     distance = np.full(matrix.shape,np.inf, dtype=int)#路径长度
     abs_distance = np.full(matrix.shape, 0 , dtype=int)#绝对距离
 
-    directions = [(0, 1), (0, -1), (1, 0), (-1, 0),\
-                  (-1,-1),(1,1),(-1,1),(1,-1)]  # 上下左右八个方向
-    points_unexplore_area={tuple(point): 0 for point in points}#节点的未探索区域
+    directions = [(0, 1), (0, -1), (1, 0), (-1, 0), (-1,-1),(1,1),(-1,1),(1,-1)]
+    points_unexplore_area={tuple(point): 0 for point in points}
 
-    # print(points)
-    # print(points_unexplore_area)##节点的未探索区域
     for start in points:
         visited = np.zeros_like(matrix, dtype=bool)
         distance = np.full(matrix.shape,np.inf, dtype=int)
@@ -1571,9 +1207,6 @@ def build_graph(matrix, points,vis_mask,true_exp_mask,map_mask):
                         abs_distance[nx,ny]=abs_distance[x,y]-1
                     else:
                         abs_distance[nx,ny]=abs_distance[x,y]+1
-        ##该写生成边了
-    # print(abs_distance)
-    # print(graph)
     return graph
 
 def filter_node(raw_my_node_neighbors,my_node,voronoi_graph,iteration_node):
@@ -1595,9 +1228,5 @@ def filter_node(raw_my_node_neighbors,my_node,voronoi_graph,iteration_node):
             new_node_neighbor+=filter_node(voronoi_graph[tuple(raw_my_node_neighbors[i])],my_node,voronoi_graph,iteration_node)
 
     return new_node_neighbor
-
-
-
-
 
 
