@@ -9,6 +9,10 @@ dist/
 build/
 *.log
 
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+
 # # Virtual environments
 # venv/
 # env/
