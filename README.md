@@ -74,7 +74,7 @@ Download [HM3D](https://aihabitat.org/datasets/hm3d/) dataset using the download
 python -m habitat_sim.utils.datasets_download \
     --username <api-token-id> \
     --password <api-token-secret> \
-    --uids hm3d_minival
+    --uids hm3d_val
 ```
 
 ### 4. Download Segmentation Model
